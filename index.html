@@ -118,7 +118,7 @@
           const distance = Math.sqrt(
             (player.x - this.x) ** 2 + (player.y - this.y) ** 2
           );
-
+          friends.splice(this.index, 1);
           return distance < player.radius + this.radius;
         }
         //não consegui remover ao sair 100% da parte superior (0+ raio === sumir no respawn)
