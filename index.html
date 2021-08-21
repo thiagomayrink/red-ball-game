@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
     <title>Red Ball</title>
 
     <style>
@@ -16,177 +16,37 @@
   </head>
 
   <body>
-    <canvas id="canvas" onmousemove="onMouseMove(event)" onclick="null" ;>
-      ></canvas
-    >
+    <canvas id="canvas" onclick="null" ;> ></canvas>
 
-    <script>
+    <script type="text/javascript" src="./entities/Ball.js"></script>
+    <script type="text/javascript" src="./entities/AutonomousBall.js"></script>
+    <script type="text/javascript" src="./entities/Player.js"></script>
+    <script type="text/javascript" src="./entities/Enemy.js"></script>
+    <script type="text/javascript" src="./entities/Friend.js"></script>
+    <script type="text/javascript" src="./handlers/friendsHandler.js"></script>
+    <script type="text/javascript" src="./handlers/enemiesHandler.js"></script>
+    <script type="text/javascript" src="./handlers/scoreHandler.js"></script>
+    <script type="text/javascript" src="./tools/tools.js"></script>
+    <script type="text/javascript">
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
 
       const canvas = document.querySelector("#canvas");
       canvas.width = screenWidth;
       canvas.height = screenHeight;
+      canvas.onmousemove = onMouseMove;
       const context = canvas.getContext("2d");
 
+      const player = new Player();
+
+      let enemies = [];
+      let friends = [];
       let gameloopIntervalId;
       let playerScoreIntervalId;
       let playerScore = 0;
-      let gameOver = false;
-
-      class Player {
-        constructor(x, y) {
-          this.x = x;
-          this.y = y;
-          this.radius = 100;
-          this.color = "red";
-        }
-        draw() {
-          drawCircle(this.x, this.y, this.radius, this.color);
-        }
-      }
-
-      class Enemy {
-        constructor(x, y, speedX, speedY) {
-          this.x = x;
-          this.y = y;
-          this.speedX = speedX;
-          this.speedY = speedY;
-          this.color = "blue";
-          this.radius = 30;
-        }
-
-        draw() {
-          drawCircle(this.x, this.y, this.radius, this.color);
-        }
-
-        move() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-        }
-
-        increaseSpeed() {
-          this.speedX *= 1.001;
-          this.speedY *= 1.001;
-        }
-
-        checkCollisionAgainstPlayer() {
-          const distance = Math.sqrt(
-            (player.x - this.x) ** 2 + (player.y - this.y) ** 2
-          );
-
-          return distance < player.radius + this.radius;
-        }
-
-        bounceOnEdge() {
-          if (this.x < 0 || this.x > screenWidth) {
-            this.speedX *= -1;
-          }
-
-          if (this.y < 0 || this.y > screenHeight) {
-            this.speedY *= -1;
-          }
-        }
-      }
-
-      class Friend {
-        constructor(x, y, speedX, speedY, index) {
-          this.x = x;
-          this.y = y;
-          this.speedX = speedX;
-          this.speedY = speedY;
-          this.color = "black";
-          this.radius = 20;
-          this.index = index;
-        }
-
-        draw() {
-          drawCircle(this.x, this.y, this.radius, this.color);
-        }
-
-        move() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-        }
-
-        increaseSpeed() {
-          this.speedX *= 1.001;
-          this.speedY *= 1.001;
-        }
-
-        checkCollisionAgainstPlayer() {
-          const distance = Math.sqrt(
-            (player.x - this.x) ** 2 + (player.y - this.y) ** 2
-          );
-          friends.splice(this.index, 1);
-          return distance < player.radius + this.radius;
-        }
-        //não consegui remover ao sair 100% da parte superior (0+ raio === sumir no respawn)
-        removeOnEdge() {
-          if (this.x < 0 || this.x + this.radius > screenWidth) {
-            friends.splice(this.index, 1);
-          }
-
-          if (this.y < 0 || this.y + this.radius > screenHeight) {
-            friends.splice(this.index, 1);
-          }
-        }
-      }
-
-      function incrementScore() {
-        playerScore++;
-      }
-
-      function randomInteger(min, max) {
-        return Math.floor(Math.random() * (max - min) + min);
-      }
-
-      function summonEnemy() {
-        enemies.push(new Enemy(0, 0, 10, 10));
-      }
-
-      function moveEnemies() {
-        enemies.forEach((enemy) => enemy.move());
-      }
-
-      function handleEnemiesBounce() {
-        enemies.forEach((enemy) => enemy.bounceOnEdge());
-      }
-
-      function increaseEnemiesSpeed() {
-        enemies.forEach((enemy) => enemy.increaseSpeed());
-      }
-
-      function drawEnemies() {
-        enemies.forEach((enemy) => enemy.draw());
-      }
-
-      function summonFriend() {
-        let index = 0;
-        if (friends.length > 0) index = friends.length - 1;
-
-        friends.push(new Friend(0, 0, 10, 10, index));
-      }
-
-      function moveFriends() {
-        friends.forEach((friend) => friend.move());
-      }
-
-      function handleFriendsBounce() {
-        friends.forEach((friend) => friend.removeOnEdge());
-      }
-
-      function increaseFriendsSpeed() {
-        friends.forEach((friend) => friend.increaseSpeed());
-      }
-
-      function drawFriends() {
-        friends.forEach((friend) => friend.draw());
-      }
 
       function onMouseMove(event) {
-        player.x = event.clientX;
-        player.y = event.clientY;
+        player.moveTo(event.clientX, event.clientY);
       }
 
       function drawCircle(x, y, radius, color) {
@@ -200,56 +60,38 @@
         context.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      function endGame() {
-        canvas.style.cursor = "pointer";
-
-        setTimeout(() => {
-          alert(`Fim do Jogo! Pontuação: ${playerScore}`);
-        }, 50);
-
-        clearInterval(playerScoreIntervalId);
-        clearInterval(gameloopIntervalId);
-
-        canvas.onclick = () => startGame();
-      }
-
-      const enemy = new Enemy();
-      const player = new Player();
-      let enemies = [];
-      let friends = [];
-
-      function startGame() {
-        player.x = screenWidth / 2;
-        player.y = screenHeight / 2;
-
+      function setControlls() {
         canvas.style.cursor = "none";
         canvas.onclick = "null";
+      }
 
+      function resetTargets() {
         enemies = [];
         friends = [];
-        playerScore = 0;
-        summonEnemy();
+      }
 
-        clearInterval(playerScoreIntervalId);
-        clearInterval(gameloopIntervalId);
+      function renderGame() {
+        clearScreen();
+        player.draw();
+        drawEnemies();
+        drawFriends();
+      }
+
+      function startGame() {
+        player.initialPosition(screenWidth / 2, screenHeight / 2);
+
+        setControlls();
+        resetTargets();
+        resetScore();
+
+        summonEnemy();
 
         gameloopIntervalId = setInterval(gameLoop, 1000 / 60);
         playerScoreIntervalId = setInterval(incrementScore, 1000);
       }
 
       function gameLoop() {
-        clearScreen();
-
-        moveEnemies();
-        moveFriends();
-
-        enemies.forEach((enemy) => {
-          if (enemy.checkCollisionAgainstPlayer()) endGame();
-        });
-
-        friends.forEach((friend) => {
-          if (friend.checkCollisionAgainstPlayer()) playerScore++;
-        });
+        updateState();
 
         //5 in 1000 drop rate
         if (randomInteger(0, 1000) < 5) {
@@ -260,15 +102,37 @@
           summonFriend();
         }
 
-        player.draw();
+        renderGame();
+      }
+
+      function endGame() {
+        canvas.style.cursor = "pointer";
+
+        setTimeout(() => {
+          alert(`Fim do Jogo! Pontuação: ${playerScore}`);
+        }, 50);
+
+        clearInterval(playerScoreIntervalId);
+        clearInterval(gameloopIntervalId);
+        canvas.onclick = () => startGame();
+      }
+
+      function updateState() {
+        moveEnemies();
+        moveFriends();
 
         increaseEnemiesSpeed();
         handleEnemiesBounce();
-        drawEnemies();
 
         increaseFriendsSpeed();
         handleFriendsBounce();
-        drawFriends();
+
+        enemies.forEach((enemy) => {
+          if (enemy.checkCollisionAgainstPlayer()) endGame();
+        });
+        friends.forEach((friend) => {
+          if (friend.checkCollisionAgainstPlayer()) playerScore++;
+        });
       }
 
       startGame();
